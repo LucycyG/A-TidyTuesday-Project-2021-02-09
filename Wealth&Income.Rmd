@@ -1,0 +1,292 @@
+---
+output:
+  pdf_document: default
+urlcolor: blue
+header-includes:    
+  - \usepackage{lastpage}
+  - \usepackage{fancyhdr}
+  - \pagestyle{fancy}
+  - \fancyhead[CO, CE]{Xiyuan Gu}
+  - \fancyfoot[CO, CE]{\thepage \ of \pageref{LastPage}}
+---
+
+```{r setup, message = FALSE, echo=FALSE}
+# Students: You probably shouldn't change any of the code in this chunk.
+
+# These are the packages you will need for this activity
+packages_needed <- c("tidyverse", "googledrive", "readxl", "janitor", 
+                     "lubridate", "opendatatoronto", "ggthemes")
+
+package.check <- lapply(
+  packages_needed,
+  FUN = function(x) {
+    if (!require(x, character.only = TRUE)) {
+      install.packages(x, dependencies = TRUE)
+    }
+  }
+)
+
+# Credit: package.check based on a helpful post from Vikram Baliga https://vbaliga.github.io/verify-that-r-packages-are-installed-and-loaded/
+
+# Load tidyverse
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(ggthemes)
+
+# Set so that long lines in R will be wrapped:
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=80), echo = TRUE)
+```
+
+
+```{r load_data,message=FALSE, echo=FALSE}
+lifetime_earn <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-02-09/lifetime_earn.csv')
+student_debt <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-02-09/student_debt.csv')
+retirement <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-02-09/retirement.csv')
+home_owner <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-02-09/home_owner.csv')
+race_wealth <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-02-09/race_wealth.csv')
+income_time <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-02-09/income_time.csv')
+income_limits <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-02-09/income_limits.csv')
+income_aggregate <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-02-09/income_aggregate.csv')
+income_distribution <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-02-09/income_distribution.csv')
+income_mean <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-02-09/income_mean.csv')
+
+```
+
+Code last run `r Sys.Date()`.  
+Data: `r date('2021-02-09')`.   
+
+# TidyTuesday: Income and Wealth Over Time
+
+## About the data
+The income and wealth data is from the Urban Institute and the US Census. The Urban Institute provides data on wealth by race and the US Census focuses on historical income.  The dataset in this Tidytuesday project contains `lifetime_earn`, `student_debt`, `retirement`, `home_owner`, `race_wealth`, `income_time`, `income_limits`, `income_aggregate`, `income_distribution` and `income_mean`of each race yearwise. The illustration could be stacked barplots, boxplots, line graphs for summary or comparisons.
+What I am interested in visualizing from this dataset is to see how the wealth and income of mionrity groups such as black people and Asians distributes, compared with the White. 
+
+## Visualizations for Income
+
+### Data Wrangling
+I filtered the races into  `All Races`, `Black Alone`, `White Alone`, `Hispanic (Any Race)` and `Asian Alone` for my comparison. Since `Asian Alone`  started to record in 1988, I visualized the distribution starting the year of 1987. The filtered dataset is stored in `income_data`.
+
+```{r}
+asian<-income_distribution%>%filter(race=="Asian Alone") #from 1988 to 2019
+income_data<-income_distribution%>%
+  filter(race %in% c('All Races',"Black Alone", "White Alone", "Hispanic (Any Race)","Asian Alone")) %>%
+  filter(year >= 1988)
+na<-income_data%>%
+  filter(is.na(income_mean))#no NAs in income_mean
+na<-income_data%>%
+  filter(is.na(income_distribution))#no NAs in income_distribution
+
+```
+
+### Median Income over time by Race
+From the graph, we can see that the Asian(alone) ethinicity group has the highest median of income at all time and Asian(alone) and White are the two groups above the median for all races.
+Whereas, Hispanic(all race) and Black(alone) are above the median of all races and Black(alone) has the lowest medain of income of all time from 1988 to 2019.
+```{r}
+library(ghibli)
+library(grid)
+income_data$race <- factor(income_data$race , levels = c("Asian Alone", "White Alone",'Hispanic (Any Race)', 'Black Alone', "All Races"))
+plot1<-income_data%>%ggplot(aes(x = year, y = income_median, group = race,color=race)) +geom_line()+
+  scale_y_continuous(labels = scales::comma)+
+  geom_text(data = filter(income_data, year == "2011"),
+              aes(label = race),
+              hjust = 0, nudge_x = 0.2) +
+  labs(title = 'Median Income by Race, 1988-2019',
+       x='Year',
+       y='Income Median ($)',
+       caption = str_c("Created by: Xiyuan Gu for TidyTuesday\nSource: the Urban Institute and the US Census\nData as of ", date('2021-02-09')))+
+  theme_minimal()+ theme(legend.position =  'none')+
+  scale_colour_ghibli_d("KikiMedium", direction = -1)
+plot1
+
+```
+
+
+### Income Distribution vs Income Bracket over time for `Black Alone`, `White Alone`, `Hispanic (Any Race)` and `Asian Alone`.
+This interactive plot shows the income distribution (%) of each ethnicity group in all income bracket from 1988 to 2019. The size of the points increases as the year goes by. What we can observe is that the `Black alone` group occupies the largest proportion in the lowest income bracket `Under $15,000` and its porportion decreases as the income bracket goes up. The `Hispanic (any race)` group also follows this trend. Whereas, most of the `Asian alone`  distributes in the bracket of `$50,000 to $74,999` or above. Notably, over recent years, the income distribution of `Asian alone` rises in the highest income bracket, `$200,000 and over`, so does `White alone`. The income proportion of `White alone` largely focuses in the middle and lower range of income bracket, only about 20% proportion has a income above $150,000.
+
+
+
+```{r}
+library(ghibli)
+#oder the income bracket from highest to lowest
+income_data$income_bracket = factor(income_data$income_bracket, levels=c('$200,000 and over','$150,000 to $199,999','$100,000 to $149,999','$75,000 to $99,999','$50,000 to $74,999','$35,000 to $49,999','$25,000 to $34,999','$15,000 to $24,999','Under $15,000'))
+income_data$race = factor(income_data$race, levels=c("Asian Alone","White Alone", "Hispanic (Any Race)","Black Alone"))
+plot2<-income_data%>%
+  filter(race %in% c("Black Alone", "White Alone", "Hispanic (Any Race)","Asian Alone"))%>%
+  ggplot(aes(x = year, y = income_distribution, fill = race,color=race)) +
+  geom_col(position = "stack",stat='identity') +
+  scale_colour_ghibli_d("KikiMedium", direction = -1)+
+  scale_fill_ghibli_d("KikiMedium", direction = -1)+
+  facet_wrap(~income_bracket)+
+  labs(title = 'Income Distribution in US by Race, 1988-2019',
+       x='Year',
+       y='Income Distribution (%)',
+       caption = str_c("Created by: Xiyuan Gu for STA303/1002, U of T\nSource: the Urban Institute and the US Census\nData as of ", date('2021-02-09')))+
+  theme_minimal()
+plot2
+```
+
+```{r}
+library(plotly)
+library(ghibli)
+library(ggplot2)
+income_data$income_bracket = factor(income_data$income_bracket, levels=c('$200,000 and over','$150,000 to $199,999','$100,000 to $149,999','$75,000 to $99,999','$50,000 to $74,999','$35,000 to $49,999','$25,000 to $34,999','$15,000 to $24,999','Under $15,000'))
+income_data$race = factor(income_data$race, levels=c("Asian Alone","White Alone", "Hispanic (Any Race)","Black Alone"))
+
+p<-income_data%>%
+  filter(race %in% c("Black Alone", "White Alone", "Hispanic (Any Race)","Asian Alone"))%>%
+  ggplot()+geom_point(aes(x=income_distribution,y=income_bracket,color=race,group=race,size=year),alpha=0.5, position = position_dodge(width = 0.75))+
+  scale_colour_ghibli_d("KikiMedium", direction = -1)+
+  labs(title = 'Income Distribution by Race of each income bracket in US, 1988-2019',
+       y='Income Bracket',
+       x='Income Distribution (%)',
+       caption = str_c("Created by: Xiyuan Gu for TidyTuesday\nSource: the Urban Institute and the US Census\nData as of ", date('2021-02-09')))+
+  theme(legend.position = 'none',
+        panel.grid.minor.x = element_blank())+
+  theme_minimal()
+plot2<-ggplotly(p)
+
+```
+
+```{r,echo=FALSE}
+# save the widget at .html format
+library(htmlwidgets)
+saveWidget(plot2, file="/users/lucygu/downloads/plot2.html")
+```
+
+### scatter plot of income_time
+This interactive plot shows the incomes of the families with `upper income status` (90th income percentile) have largely increased from `$95,000` in 1963 to `$180,000` in 2016. For the `middle income status` (50th income percentile) families, their incomes have slowly increased from `$47,000` to `$65,000`. However, the `low income status` (10th income percentile) families remain familial incomes of around `$14,000`. Overall, we can observe that the gaps between the upper and lower familial income has widen over time. 
+```{r}
+plot3<-income_time%>%
+  group_by(year)%>%
+  mutate(income_status=case_when(
+    percentile=="10th"~"Low Income Status",
+    percentile=="50th"~"Middle Income Status",
+    percentile=="90th"~"Upper Income Status"))%>%
+  ggplot(aes(x=income_status,y=income_family))+
+  guides(color=FALSE)+  geom_boxplot(aes(color=income_status))+
+  scale_color_ghibli_d("MononokeMedium",direction = -1)+
+  labs(title = 'Family-level income by percentile',
+       x='Family Income Status',
+       y='Familial income ($)',
+       caption = str_c("Created by: Xiyuan Gu for TidyTuesday\nSource: the Urban Institute and the US Census\nData as of ", date('2021-02-09')))+theme_minimal()
+plot3
+```
+
+```{r}
+library(plotly)
+fam_income<-income_time%>%
+  group_by(year)%>%
+  mutate(income_status=case_when(
+    percentile=="10th"~"Low Income Status",
+    percentile=="50th"~"Middle Income Status",
+    percentile=="90th"~"Upper Income Status"))
+fig <- plot_ly(fam_income, x = ~income_status, y = ~income_family, color = ~income_status, type = "box")
+#fig <- fig %>% layout(boxmode = "group")
+
+fig
+```
+
+```{r}
+library(plotly)
+fam_income<-income_time%>%
+  group_by(year)%>%
+  mutate(income_status=case_when(
+    percentile=="10th"~"Low Income Status",
+    percentile=="50th"~"Middle Income Status",
+    percentile=="90th"~"Upper Income Status"))
+#trace_0<-fam_income%>%filter(income_status=="Low Income Status")
+#trace_1<-fam_income%>%filter(income_status=="Middle Income Status")
+#trace_2<-fam_income%>%filter(income_status=="Upper Income Status")
+#data<-data.frame(income_time$year, trace_0, trace_1, trace_2)
+fig <- fam_income%>%ggplot()+
+  geom_point(aes(x = year, y = income_family,color=income_status))+
+  scale_colour_ghibli_d("KikiMedium", direction = -1)+
+  labs(title = 'Family-level income by percentile from 1963 to 2016',
+       y='Familial income ($)',
+       caption = str_c("Created by: Xiyuan Gu for TidyTuesday\nSource: the Urban Institute and the US Census\nData as of ", date('2021-02-09')))+theme_minimal()
+plot3<-ggplotly(fig)
+plot3 <- plot3%>%
+  layout(hovermode = "x unified")
+         
+plot3
+```
+
+```{r,echo=FALSE}
+# save the widget at .html format
+library(htmlwidgets)
+saveWidget(plot3, file="/users/lucygu/downloads/plot3.html")
+```
+
+## Visualizations for Wealth
+
+## Visualization for Wealth By gender and race
+This graph shows that the average lifetime earning varies between different races and genders. The largest gender disparity of average lifetime earning is between White women and White men for about $1,000,000 and the smallerest is between Black women and men. However, regarding with races, both  White women's and men's the average lifetime earnings are higher compared with the Hispanic's and the Black's.
+
+```{r}
+library(ggplot2)
+library(ggthemes)
+library(dplyr)
+library(ghibli)
+
+brks <- seq(-3000000, 3000000, 1000000)
+lbls = paste0(as.character(c(seq(3, 0, -1), seq(1, 3, 1))), "m")
+
+plot4<-ggplot(data=lifetime_earn,aes(y=lifetime_earn,x=race,fill=gender)) + 
+  geom_bar(data=subset(lifetime_earn,gender=="Women"),stat = "identity", width = .6) + 
+  geom_bar(data=subset(lifetime_earn,gender=="Men"),
+           stat = "identity", width = .6,aes(y=lifetime_earn*(-1))) + 
+  scale_y_continuous(breaks=brks,labels=lbls) + 
+  scale_fill_ghibli_d("LaputaMedium", direction = -1)+
+  labs(title="Average lifetime earning by gender and race", 
+       x='Race',
+       y='Average lifetime earning',
+       caption = str_c("Created by: Xiyuan Gu for TidyTuesday\nSource: the Urban Institute and the US Census\nData as of ", date('2021-02-09')))+
+  
+  guides(fill=guide_legend(title = NULL))+
+  theme_minimal()+coord_flip()
+
+plot4
+```
+
+### data wrangling
+I merged the data `home_owner` and `race_wealth` by the variable `race`. The `race_wealth` includes median and mean family wealth and I choose to merge the mendian family wealth.
+```{r}
+medianwealth<-race_wealth%>%
+  filter(type=='Median')
+home_wealth<-merge(medianwealth,home_owner,by=c('year','race'))
+```
+
+
+### data wrangling
+```{r}
+wealth_wb<-race_wealth%>%
+  filter(!is.na(wealth_family))%>%
+  filter(type=="Median")%>%
+  filter(race %in% c("White","Black"))%>%
+  filter(year>="1980")
+#for ribbon
+ribbon<-wealth_wb%>%
+  pivot_wider(names_from = race, values_from = wealth_family)
+```
+
+
+### Visualization of wealth between White and Black ethnic groups
+```{r}
+p5<-ggplot()+geom_line(aes(x=year,y=wealth_family,color=race))+
+  geom_ribbon(aes(ymin = Black, ymax = White), fill = d_blue, alpha = 0.5)+
+   geom_ribbon(aes(ymin = level - 1, ymax = level + 1), fill = "grey70")
+  #geom_text(data = filter(race_wealth, year == "1983"),
+   #           aes(label = race),
+    #          hjust = 0, nudge_x = 0.2) +
+  #facet_wrap(~race)+
+  theme_minimal()+ theme(legend.position =  'none')+
+  scale_colour_ghibli_d("KikiMedium", direction = -1)
+plot5
+  
+```
+
+## Conclusion
+
+
