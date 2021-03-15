@@ -59,13 +59,13 @@ Data: `r date('2021-02-09')`.
 # TidyTuesday: Income and Wealth Over Time
 
 ## About the data
-The income and wealth data is from the Urban Institute and the US Census. The Urban Institute provides data on wealth by race and the US Census focuses on historical income.  The dataset in this Tidytuesday project contains `lifetime_earn`, `student_debt`, `retirement`, `home_owner`, `race_wealth`, `income_time`, `income_limits`, `income_aggregate`, `income_distribution` and `income_mean`of each race yearwise. The illustration could be stacked barplots, boxplots, line graphs for summary or comparisons.
-What I am interested in visualizing from this dataset is to see how the wealth and income of mionrity groups such as black people and Asians distributes, compared with the White. 
+The income and wealth data is from the Urban Institute and the US Census. The Urban Institute provides data on wealth by race and the US Census focuses on historical income.  The dataset in this Tidytuesday project contains `lifetime_earn`, `student_debt`, `retirement`, `home_owner`, `race_wealth`, `income_time`, `income_limits`, `income_aggregate`, `income_distribution` and `income_mean`of each race yearly. The illustration could be stacked bar plots, boxplots, line graphs for summary or comparisons.
+What I am interested in visualizing from this dataset is to see how the wealth and income of minority groups such as black people and Asians distribute, compared with the White.
 
 ## Visualizations for Income
 
 ### Data Wrangling
-I filtered the races into  `All Races`, `Black Alone`, `White Alone`, `Hispanic (Any Race)` and `Asian Alone` for my comparison. Since `Asian Alone`  started to record in 1988, I visualized the distribution starting the year of 1987. The filtered dataset is stored in `income_data`.
+I filtered the races into `All Races`, `Black Alone`, `White Alone`, `Hispanic (Any Race)` and `Asian Alone` for my comparison. Since `Asian Alone`  started to record in 1988, I visualized the distribution starting the year 1987. The filtered dataset is stored in `income_data`.
 
 ```{r}
 asian<-income_distribution%>%filter(race=="Asian Alone") #from 1988 to 2019
@@ -80,8 +80,9 @@ na<-income_data%>%
 ```
 
 ### Median Income over time by Race
-From the graph, we can see that the Asian(alone) ethinicity group has the highest median of income at all time and Asian(alone) and White are the two groups above the median for all races.
-Whereas, Hispanic(all race) and Black(alone) are above the median of all races and Black(alone) has the lowest medain of income of all time from 1988 to 2019.
+From Graph 1, we can see that the Asian (alone) ethnic group has the highest median of income of all time and Asian (alone) and White are the two groups above the median for all races.
+Whereas Hispanic (all race) and Black (alone) are above the median of all races and Black (alone) has the lowest median of income of all time from 1988 to 2019.
+
 ```{r}
 library(ghibli)
 library(grid)
@@ -104,29 +105,7 @@ plot1
 
 
 ### Income Distribution vs Income Bracket over time for `Black Alone`, `White Alone`, `Hispanic (Any Race)` and `Asian Alone`.
-This interactive plot shows the income distribution (%) of each ethnicity group in all income bracket from 1988 to 2019. The size of the points increases as the year goes by. What we can observe is that the `Black alone` group occupies the largest proportion in the lowest income bracket `Under $15,000` and its porportion decreases as the income bracket goes up. The `Hispanic (any race)` group also follows this trend. Whereas, most of the `Asian alone`  distributes in the bracket of `$50,000 to $74,999` or above. Notably, over recent years, the income distribution of `Asian alone` rises in the highest income bracket, `$200,000 and over`, so does `White alone`. The income proportion of `White alone` largely focuses in the middle and lower range of income bracket, only about 20% proportion has a income above $150,000.
-
-
-
-```{r}
-library(ghibli)
-#oder the income bracket from highest to lowest
-income_data$income_bracket = factor(income_data$income_bracket, levels=c('$200,000 and over','$150,000 to $199,999','$100,000 to $149,999','$75,000 to $99,999','$50,000 to $74,999','$35,000 to $49,999','$25,000 to $34,999','$15,000 to $24,999','Under $15,000'))
-income_data$race = factor(income_data$race, levels=c("Asian Alone","White Alone", "Hispanic (Any Race)","Black Alone"))
-plot2<-income_data%>%
-  filter(race %in% c("Black Alone", "White Alone", "Hispanic (Any Race)","Asian Alone"))%>%
-  ggplot(aes(x = year, y = income_distribution, fill = race,color=race)) +
-  geom_col(position = "stack",stat='identity') +
-  scale_colour_ghibli_d("KikiMedium", direction = -1)+
-  scale_fill_ghibli_d("KikiMedium", direction = -1)+
-  facet_wrap(~income_bracket)+
-  labs(title = 'Income Distribution in US by Race, 1988-2019',
-       x='Year',
-       y='Income Distribution (%)',
-       caption = str_c("Created by: Xiyuan Gu for STA303/1002, U of T\nSource: the Urban Institute and the US Census\nData as of ", date('2021-02-09')))+
-  theme_minimal()
-plot2
-```
+This interactive plot, Graph 2, shows the income distribution (%) of each ethnicity group in all income bracket from 1988 to 2019. The size of the points increases as the year goes by. The `Black alone` group occupies the largest proportion in the lowest income bracket, `Under $15,000`, and the Black's proportion decreases as the income bracket goes up. The `Hispanic (any race)` group also follows this trend. Whereas most of the `Asian alone`  distributes in the bracket of `$50,000 to $74,999` or above. Notably, over recent years, the income distribution of `Asian alone` rises in the highest income bracket, `$200,000 and over`, so does `White alone`. The income proportion of `White alone` mainly concentrates on the middle and lower range of income bracket and only about 20% proportion earn above $150,000.
 
 ```{r}
 library(plotly)
@@ -156,38 +135,8 @@ library(htmlwidgets)
 saveWidget(plot2, file="/users/lucygu/downloads/plot2.html")
 ```
 
-### scatter plot of income_time
-This interactive plot shows the incomes of the families with `upper income status` (90th income percentile) have largely increased from `$95,000` in 1963 to `$180,000` in 2016. For the `middle income status` (50th income percentile) families, their incomes have slowly increased from `$47,000` to `$65,000`. However, the `low income status` (10th income percentile) families remain familial incomes of around `$14,000`. Overall, we can observe that the gaps between the upper and lower familial income has widen over time. 
-```{r}
-plot3<-income_time%>%
-  group_by(year)%>%
-  mutate(income_status=case_when(
-    percentile=="10th"~"Low Income Status",
-    percentile=="50th"~"Middle Income Status",
-    percentile=="90th"~"Upper Income Status"))%>%
-  ggplot(aes(x=income_status,y=income_family))+
-  guides(color=FALSE)+  geom_boxplot(aes(color=income_status))+
-  scale_color_ghibli_d("MononokeMedium",direction = -1)+
-  labs(title = 'Family-level income by percentile',
-       x='Family Income Status',
-       y='Familial income ($)',
-       caption = str_c("Created by: Xiyuan Gu for TidyTuesday\nSource: the Urban Institute and the US Census\nData as of ", date('2021-02-09')))+theme_minimal()
-plot3
-```
-
-```{r}
-library(plotly)
-fam_income<-income_time%>%
-  group_by(year)%>%
-  mutate(income_status=case_when(
-    percentile=="10th"~"Low Income Status",
-    percentile=="50th"~"Middle Income Status",
-    percentile=="90th"~"Upper Income Status"))
-fig <- plot_ly(fam_income, x = ~income_status, y = ~income_family, color = ~income_status, type = "box")
-#fig <- fig %>% layout(boxmode = "group")
-
-fig
-```
+### line graph of income_time
+This interactive plot, Graph 3, shows the family incomes with `upper-income status` (90th income percentile) have increased from `$95,000` in 1963 to `$180,000` in 2016, representing a twofold increase. For  `middle-income status` (50th income percentile) families, their incomes have slowly increased from `$47,000` to `$65,000`. However,  `low-income status` (10th income percentile) families remain familial incomes of around `$14,000`. Overall, the gaps between the upper and lower familial income have widened over time. 
 
 ```{r}
 library(plotly)
@@ -199,6 +148,7 @@ fam_income<-income_time%>%
     percentile=="90th"~"Upper-income Status"))
 
 fig <- fam_income%>%ggplot()+
+  geom_line(aes(x = year, y = income_family,color=income_status))+
   geom_point(aes(x = year, y = income_family,color=income_status))+
   scale_colour_ghibli_d("KikiMedium", direction = -1)+
   labs(title = 'Graph 3: Family-level income by percentile from 1963 to 2016',
@@ -220,7 +170,7 @@ saveWidget(plot3, file="/users/lucygu/downloads/plot3.html")
 ## Visualizations for Wealth
 
 ## Visualization for Wealth By gender and race
-This graph shows that the average lifetime earning varies between different races and genders. The largest gender disparity of average lifetime earning is between White women and White men for about $1,000,000 and the smallerest is between Black women and men. However, regarding with races, both  White women's and men's the average lifetime earnings are higher compared with the Hispanic's and the Black's.
+Graph 4 shows that the average lifetime earnings vary between different races and genders. The largest gender disparity of average lifetime earning is between White women and White men for about $1,000,000 and the smallest is between Black women and men. However, regarding races, both  White women's and men's average lifetime earnings are higher compared with Hispanic's and Black's.
 
 ```{r}
 library(ggplot2)
@@ -250,7 +200,7 @@ plot4
 
 ### Visualization of family wealth between White and Black ethnic groups
 
-In 1983, white families had `$92,045` in median more wealth normalized to 2016 than black famlies. By 2016, the disparity in family wealth grew to `$153,591`. Notably, the largest disparity between white and black families is `$174,304` in 2007. When global recession continues, the median wealth in white families droped dramatically by `$50,000` in the next three years while in black families only dorped a little.
+In 1983, white families had `$92,045` in median more wealth normalized to 2016 than black families. By 2016, the disparity in family wealth grew to `$153,591`. Notably, the biggest disparity between white and black families is `$174,304` in 2007. When the global recession continues, the median wealth in white families dropped dramatically by `$50,000` in the next three years while in black families only dropped a little.
 
 ```{r}
 wealth_wb<-race_wealth%>%
