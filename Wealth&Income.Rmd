@@ -88,14 +88,15 @@ library(grid)
 income_data$race <- factor(income_data$race , levels = c("Asian Alone", "White Alone",'Hispanic (Any Race)', 'Black Alone', "All Races"))
 plot1<-income_data%>%ggplot(aes(x = year, y = income_median, group = race,color=race)) +geom_line()+
   scale_y_continuous(labels = scales::comma)+
-  geom_text(data = filter(income_data, year == "2011"),
+  geom_text(data = filter(income_data, year == "2015"),
               aes(label = race),
               hjust = 0, nudge_x = 0.2) +
-  labs(title = 'Median Income by Race, 1988-2019',
+  labs(title = 'Graph 1: Median Income by Race, 1988-2019',
        x='Year',
        y='Income Median ($)',
        caption = str_c("Created by: Xiyuan Gu for TidyTuesday\nSource: the Urban Institute and the US Census\nData as of ", date('2021-02-09')))+
   theme_minimal()+ theme(legend.position =  'none')+
+  scale_x_continuous(breaks = seq(1988, 2021, 3), limits = c(1988, 2022)) +
   scale_colour_ghibli_d("KikiMedium", direction = -1)
 plot1
 
@@ -138,7 +139,7 @@ p<-income_data%>%
   filter(race %in% c("Black Alone", "White Alone", "Hispanic (Any Race)","Asian Alone"))%>%
   ggplot()+geom_point(aes(x=income_distribution,y=income_bracket,color=race,group=race,size=year),alpha=0.5, position = position_dodge(width = 0.75))+
   scale_colour_ghibli_d("KikiMedium", direction = -1)+
-  labs(title = 'Income Distribution by Race of each income bracket in US, 1988-2019',
+  labs(title = 'Graph 2: Income Distribution by Race of each income bracket in US, 1988-2019',
        y='Income Bracket',
        x='Income Distribution (%)',
        caption = str_c("Created by: Xiyuan Gu for TidyTuesday\nSource: the Urban Institute and the US Census\nData as of ", date('2021-02-09')))+
@@ -193,17 +194,14 @@ library(plotly)
 fam_income<-income_time%>%
   group_by(year)%>%
   mutate(income_status=case_when(
-    percentile=="10th"~"Low Income Status",
-    percentile=="50th"~"Middle Income Status",
-    percentile=="90th"~"Upper Income Status"))
-#trace_0<-fam_income%>%filter(income_status=="Low Income Status")
-#trace_1<-fam_income%>%filter(income_status=="Middle Income Status")
-#trace_2<-fam_income%>%filter(income_status=="Upper Income Status")
-#data<-data.frame(income_time$year, trace_0, trace_1, trace_2)
+    percentile=="10th"~"Low-income Status",
+    percentile=="50th"~"Middle-income Status",
+    percentile=="90th"~"Upper-income Status"))
+
 fig <- fam_income%>%ggplot()+
   geom_point(aes(x = year, y = income_family,color=income_status))+
   scale_colour_ghibli_d("KikiMedium", direction = -1)+
-  labs(title = 'Family-level income by percentile from 1963 to 2016',
+  labs(title = 'Graph 3: Family-level income by percentile from 1963 to 2016',
        y='Familial income ($)',
        caption = str_c("Created by: Xiyuan Gu for TidyTuesday\nSource: the Urban Institute and the US Census\nData as of ", date('2021-02-09')))+theme_minimal()
 plot3<-ggplotly(fig)
@@ -239,7 +237,7 @@ plot4<-ggplot(data=lifetime_earn,aes(y=lifetime_earn,x=race,fill=gender)) +
            stat = "identity", width = .6,aes(y=lifetime_earn*(-1))) + 
   scale_y_continuous(breaks=brks,labels=lbls) + 
   scale_fill_ghibli_d("LaputaMedium", direction = -1)+
-  labs(title="Average lifetime earning by gender and race", 
+  labs(title="Graph 4: Average lifetime earning by gender and race", 
        x='Race',
        y='Average lifetime earning',
        caption = str_c("Created by: Xiyuan Gu for TidyTuesday\nSource: the Urban Institute and the US Census\nData as of ", date('2021-02-09')))+
@@ -250,43 +248,75 @@ plot4<-ggplot(data=lifetime_earn,aes(y=lifetime_earn,x=race,fill=gender)) +
 plot4
 ```
 
-### data wrangling
-I merged the data `home_owner` and `race_wealth` by the variable `race`. The `race_wealth` includes median and mean family wealth and I choose to merge the mendian family wealth.
-```{r}
-medianwealth<-race_wealth%>%
-  filter(type=='Median')
-home_wealth<-merge(medianwealth,home_owner,by=c('year','race'))
-```
+### Visualization of family wealth between White and Black ethnic groups
 
+In 1983, white families had `$92,045` in median more wealth normalized to 2016 than black famlies. By 2016, the disparity in family wealth grew to `$153,591`. Notably, the largest disparity between white and black families is `$174,304` in 2007. When global recession continues, the median wealth in white families droped dramatically by `$50,000` in the next three years while in black families only dorped a little.
 
-### data wrangling
 ```{r}
 wealth_wb<-race_wealth%>%
   filter(!is.na(wealth_family))%>%
   filter(type=="Median")%>%
   filter(race %in% c("White","Black"))%>%
-  filter(year>="1980")
+  filter(year>=1980)
 #for ribbon
 ribbon<-wealth_wb%>%
-  pivot_wider(names_from = race, values_from = wealth_family)
-```
+  pivot_wider(names_from = race, values_from = wealth_family)%>%
+  mutate(disparity=White-Black)
+# for label disparity
+text_1983 <- ribbon %>%
+  mutate(position = 60000) %>%
+  filter(year == 1983)
+text_2007 <- ribbon %>%
+  mutate(position = 100000) %>%
+  filter(year == 2007)
+text_2016 <- ribbon %>%
+  mutate(position = 90000) %>%
+  filter(year == 2016)
 
-
-### Visualization of wealth between White and Black ethnic groups
-```{r}
-p5<-ggplot()+geom_line(aes(x=year,y=wealth_family,color=race))+
-  geom_ribbon(aes(ymin = Black, ymax = White), fill = d_blue, alpha = 0.5)+
-   geom_ribbon(aes(ymin = level - 1, ymax = level + 1), fill = "grey70")
-  #geom_text(data = filter(race_wealth, year == "1983"),
-   #           aes(label = race),
-    #          hjust = 0, nudge_x = 0.2) +
-  #facet_wrap(~race)+
-  theme_minimal()+ theme(legend.position =  'none')+
-  scale_colour_ghibli_d("KikiMedium", direction = -1)
-plot5
+p5<-ggplot()+
+  geom_line(data=wealth_wb,aes(x=year,y=wealth_family,color=race))+
+  geom_ribbon(data=ribbon,aes(x=year,ymin = Black, ymax = White), 
+              fill = ghibli_palette("SpiritedLight",direction = -1)[1], 
+              alpha = 0.5)+ 
   
+  #annotate labels positions
+  annotate("text", x = 2014.5, y = 175000, 
+         label = "White Families", 
+         color = ghibli_palette("KikiMedium", direction = -1)[2], 
+         size = 3, hjust = 0, vjust = .5) +
+   annotate("text", x = 2014.5, y = 12500, 
+         label = "Black Families", 
+         color = ghibli_palette("KikiMedium", direction = -1)[1], 
+         size = 3, hjust = 0, vjust = .5) +
+  # add segment lines (disparity markers)
+  geom_segment(data = ribbon, aes(x = year,xend = year,y = White,yend = Black),
+               linetype = "dotted",
+               color = ghibli_palette("PonyoLight",direction = -1)[5]) +
+ 
+   # add label for 1983, 2007, 2016
+  geom_label(data = text_2007,
+             aes(x = year,y = position,
+                 label =paste0("$", round(disparity,0))),
+             color = "#f9fafc", 
+             fill = ghibli_palette("SpiritedDark",direction = -1)[1], size = 2.5) +
+    geom_label(data = text_1983,
+             aes(x = year,y = position,
+                 label =paste0("$", round(disparity,0))),
+             color = "#f9fafc", 
+             fill = ghibli_palette("SpiritedDark",direction = -1)[1], size = 2.5) +
+    geom_label(data = text_2016,
+             aes(x = year,y = position,
+                 label =paste0("$", round(disparity,0))),
+             color = "#f9fafc", 
+             fill = ghibli_palette("SpiritedDark",direction = -1)[1], size = 2.5) +
+  
+  labs(title="Graph 5: Disparity in family wealth normalized to 2016, 1983-2016", 
+       x='Year',
+       y='Median Family Wealth',
+       caption = str_c("Created by: Xiyuan Gu for TidyTuesday\nSource: the Urban Institute and the US Census\nData as of ", date('2021-02-09')))+
+   theme_minimal()+ theme(legend.position =  'none')+
+  scale_x_continuous(breaks = seq(1983, 2016, 3), limits = c(1982, 2017)) +
+  scale_colour_ghibli_d("KikiMedium", direction = -1)
+p5
 ```
-
-## Conclusion
-
 
