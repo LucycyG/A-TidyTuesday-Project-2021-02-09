@@ -25,13 +25,13 @@ This interactive plot, Graph 3, shows the family incomes with upper-income statu
 ![Graph 3](https://github.com/LucycyG/A-TidyTuesday-Project-2021-02-09/blob/main/plot3_screenshot.png)
 
 ## Visualizations for Wealth
-### Graph 4 Visualization of Wealth By gender and race
+### Graph 4 Visualization of Wealth by Gender and Race
 
 Graph 4 shows that the average lifetime earnings vary between different races and genders. The largest gender disparity of average lifetime earning is between White women and White men for about $1,000,000 and the smallest is between Black women and men. However, regarding races, both  White women's and men's average lifetime earnings are higher compared with Hispanic's and Black's.
 
 ![Graph 4](https://github.com/LucycyG/A-TidyTuesday-Project-2021-02-09/blob/main/plot4.png)
 
-### Graph 5 Visualization of family wealth between White and Black ethnic groups
+### Graph 5 Visualization of Family Wealth between White and Black Ethnic Groups
 
 In 1983, white families had `$92,045` in median more wealth normalized to 2016 than black families. By 2016, the disparity in family wealth grew to `$153,591`. Notably, the biggest disparity between white and black families is `$174,304` in 2007. When the global recession continues, the median wealth in white families dropped dramatically by `$50,000` in the next three years while in black families only dropped a little.
 
