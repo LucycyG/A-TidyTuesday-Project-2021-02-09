@@ -132,10 +132,10 @@ plot2<-ggplotly(p)
 ```{r,echo=FALSE}
 # save the widget at .html format
 library(htmlwidgets)
-saveWidget(plot2, file="/users/lucygu/downloads/plot2.html")
+saveWidget(plot2, file="plot2.html")
 ```
 
-### line graph of income_time
+### Family-level income by races over time
 This interactive plot, Graph 3, shows the family incomes with `upper-income status` (90th income percentile) have increased from `$95,000` in 1963 to `$180,000` in 2016, representing a twofold increase. For  `middle-income status` (50th income percentile) families, their incomes have slowly increased from `$47,000` to `$65,000`. However,  `low-income status` (10th income percentile) families remain familial incomes of around `$14,000`. Overall, the gaps between the upper and lower familial income have widened over time. 
 
 ```{r}
@@ -151,7 +151,7 @@ fig <- fam_income%>%ggplot()+
   geom_line(aes(x = year, y = income_family,color=income_status))+
   geom_point(aes(x = year, y = income_family,color=income_status))+
   scale_colour_ghibli_d("KikiMedium", direction = -1)+
-  labs(title = 'Graph 3: Family-level income by percentile from 1963 to 2016',
+  labs(title = 'Graph 3: Family-level income by races from 1963 to 2016',
        y='Familial income ($)',
        caption = str_c("Created by: Xiyuan Gu for TidyTuesday\nSource: the Urban Institute and the US Census\nData as of ", date('2021-02-09')))+theme_minimal()
 plot3<-ggplotly(fig)
@@ -165,12 +165,12 @@ plot3
 ```{r,echo=FALSE}
 # save the widget at .html format
 library(htmlwidgets)
-saveWidget(plot3, file="/users/lucygu/downloads/plot3.html")
+saveWidget(plot3, file="plot3.html")
 ```
 
 ## Visualizations for Wealth
 
-## Visualization for Wealth By gender and race
+## Visualization of Wealth By gender and race
 Graph 4 shows that the average lifetime earnings vary between different races and genders. The largest gender disparity of average lifetime earning is between White women and White men for about $1,000,000 and the smallest is between Black women and men. However, regarding races, both  White women's and men's average lifetime earnings are higher compared with Hispanic's and Black's.
 
 ```{r}
