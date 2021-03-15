@@ -100,7 +100,7 @@ plot1<-income_data%>%ggplot(aes(x = year, y = income_median, group = race,color=
   scale_x_continuous(breaks = seq(1988, 2021, 3), limits = c(1988, 2022)) +
   scale_colour_ghibli_d("KikiMedium", direction = -1)
 plot1
-
+ggsave("plot1.png", plot = plot1)
 ```
 
 
@@ -161,6 +161,7 @@ plot3 <- plot3%>%
 plot3
 ```
 
+
 ```{r,echo=FALSE}
 # save the widget at .html format
 library(htmlwidgets)
@@ -196,6 +197,7 @@ plot4<-ggplot(data=lifetime_earn,aes(y=lifetime_earn,x=race,fill=gender)) +
   theme_minimal()+coord_flip()
 
 plot4
+ggsave("plot4.png", plot = plot4)
 ```
 
 ### Visualization of family wealth between White and Black ethnic groups
@@ -268,5 +270,6 @@ p5<-ggplot()+
   scale_x_continuous(breaks = seq(1983, 2016, 3), limits = c(1982, 2017)) +
   scale_colour_ghibli_d("KikiMedium", direction = -1)
 p5
+ggsave("plot5.png", plot = p5)
 ```
 
